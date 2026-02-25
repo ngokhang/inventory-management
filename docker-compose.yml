@@ -1,0 +1,72 @@
+services:
+  api:
+    image: inventory-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: inventory-api
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/inventory}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_AT_SECRET: ${JWT_AT_SECRET}
+      JWT_RT_SECRET: ${JWT_RT_SECRET}
+      JWT_AT_EXPIRATION: ${JWT_AT_EXPIRATION:-1d}
+      JWT_RT_EXPIRATION: ${JWT_RT_EXPIRATION:-7d}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: inventory-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: inventory-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: inventory-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-inventory}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
