@@ -47,8 +47,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Install production dependencies only
-RUN pnpm install --prod
+# Install dependencies (Prisma CLI is required for generate/migrate in this stage)
+RUN pnpm install --frozen-lockfile
 
 # Copy prisma schema and generate client
 COPY prisma ./prisma
