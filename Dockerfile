@@ -62,5 +62,5 @@ RUN chown -R node:node /app
 
 EXPOSE 8080
 
-# Run migrations and start the app
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/main.js"]
+# Run migrations, seed data, and start the app
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]

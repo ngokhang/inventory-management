@@ -49,4 +49,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([name])
+  @@index([createdAt])
 }
