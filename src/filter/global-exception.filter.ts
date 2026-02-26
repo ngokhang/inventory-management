@@ -413,7 +413,7 @@ function asPrismaKnownRequestError(
     e.name === 'PrismaClientKnownRequestError' &&
     typeof e.code === 'string'
   ) {
-    return e as Prisma.PrismaClientKnownRequestError;
+    return e as unknown as Prisma.PrismaClientKnownRequestError;
   }
 
   return null;
@@ -425,7 +425,7 @@ function asPrismaClientValidationError(
   if (e instanceof Prisma.PrismaClientValidationError) return e;
 
   if (isRecord(e) && e.name === 'PrismaClientValidationError') {
-    return e as Prisma.PrismaClientValidationError;
+    return e as unknown as Prisma.PrismaClientValidationError;
   }
   return null;
 }
@@ -524,7 +524,7 @@ function extractRequestId(req: unknown): string | undefined {
     return undefined;
   }
 
-  const request = req as RequestWithMeta;
+  const request = req as unknown as RequestWithMeta;
   const headers = request.headers ?? {};
   const v =
     headers['x-request-id'] ??
