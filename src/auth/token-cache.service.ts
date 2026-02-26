@@ -52,7 +52,10 @@ export class TokenCacheService {
       return null;
     }
 
-    const isValid = await bcrypt.compare(refreshToken, session.refreshTokenHash);
+    const isValid = await bcrypt.compare(
+      refreshToken,
+      session.refreshTokenHash,
+    );
     if (!isValid) {
       return null;
     }

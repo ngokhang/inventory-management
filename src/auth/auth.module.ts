@@ -19,6 +19,11 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
     RefreshTokenGuard,
   ],
   controllers: [AuthController],
-  exports: [AuthService, TokenCacheService, AccessTokenGuard, RefreshTokenGuard],
+  exports: [
+    AuthService,
+    TokenCacheService,
+    AccessTokenGuard,
+    RefreshTokenGuard,
+  ],
 })
 export class AuthModule {}

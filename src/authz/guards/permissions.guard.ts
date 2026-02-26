@@ -4,6 +4,13 @@ import { RedisService } from '../../redis/redis.service';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { Permission, ROLE_PERMISSIONS } from '../constants/permission.constant';
 import { Role } from 'prisma/generated/enums';
+import type { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    role?: Role;
+  };
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -22,8 +29,8 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const req = context.switchToHttp().getRequest();
-    const user = req.user as { role?: Role };
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const user = req.user;
 
     if (!user?.role) {
       return false;

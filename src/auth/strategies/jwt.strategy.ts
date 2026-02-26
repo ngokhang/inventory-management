@@ -6,8 +6,14 @@ import { ACCESS_TOKEN_COOKIE } from '../../common/constants/cookie.constant';
 import { JwtPayload } from '../types/jwt-payload.type';
 import { TokenCacheService } from '../token-cache.service';
 
+function readCookie(req: Request, key: string): unknown {
+  const cookies = req.cookies as Record<string, unknown> | undefined;
+  return cookies?.[key];
+}
+
 function extractAccessToken(req: Request): string | null {
-  return req.cookies?.[ACCESS_TOKEN_COOKIE] ?? null;
+  const token = readCookie(req, ACCESS_TOKEN_COOKIE);
+  return typeof token === 'string' ? token : null;
 }
 
 @Injectable()

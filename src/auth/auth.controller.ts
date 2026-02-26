@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -14,6 +7,7 @@ import { clearAuthCookies, setAuthCookies } from './auth-cookie.util';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { JwtPayload } from './types/jwt-payload.type';
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +19,10 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(dto);
 
     setAuthCookies(res, result.tokens.accessToken, result.tokens.refreshToken);
@@ -39,7 +36,7 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(RefreshTokenGuard)
   async refresh(
-    @CurrentUser() payload: any,
+    @CurrentUser() payload: JwtPayload & { refreshToken: string },
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.refresh(payload);

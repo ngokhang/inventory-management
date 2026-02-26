@@ -9,6 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import type { Request } from 'express';
 import { STATUS_CODES } from 'http';
 import { Prisma } from 'prisma/generated/client';
 
@@ -57,6 +58,11 @@ interface NormalizedParts {
   details?: Record<string, unknown>;
 }
 
+type RequestWithMeta = Request & {
+  id?: unknown;
+  headers?: Record<string, unknown>;
+};
+
 /**
  * Hàm thuần (pure-ish) để dễ unit-test:
  * - Nhận exception unknown + context
@@ -100,19 +106,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const { httpAdapter } = this.httpAdapterHost;
 
     const httpCtx = host.switchToHttp();
-    const req: any = httpCtx.getRequest();
-    const res: any = httpCtx.getResponse();
+    const req = httpCtx.getRequest<unknown>();
+    const res = httpCtx.getResponse<unknown>();
 
-    const method =
-      (typeof req?.method === 'string' && req.method) ||
-      (typeof httpAdapter.getRequestMethod === 'function'
-        ? httpAdapter.getRequestMethod(req)
-        : 'UNKNOWN');
-
-    const path =
-      (typeof httpAdapter.getRequestUrl === 'function'
-        ? httpAdapter.getRequestUrl(req)
-        : req?.url) || 'UNKNOWN';
+    const method = getRequestMethod(req, httpAdapter);
+    const path = getRequestPath(req, httpAdapter);
 
     const requestId = extractRequestId(req);
 
@@ -190,7 +188,7 @@ function mapHttpException(exception: unknown): NormalizedParts | null {
 
     // ValidationPipe mặc định: { statusCode: 400, error: "Bad Request", message: string[] }
     if (
-      statusCode === HttpStatus.BAD_REQUEST &&
+      statusCode === Number(HttpStatus.BAD_REQUEST) &&
       Array.isArray(response.message)
     ) {
       const errors = response.message
@@ -437,7 +435,7 @@ function isPrismaQueryErrorCode(code: string): boolean {
   return code === 'P2008' || code === 'P2009' || code === 'P2016';
 }
 
-function isRecord(v: unknown): v is Record<string, any> {
+function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
@@ -456,10 +454,10 @@ function safeMessage(input: string, maxLen: number): string {
 
 function safeJsonStringify(value: unknown): string {
   try {
-    const seen = new WeakSet();
+    const seen = new WeakSet<object>();
     return JSON.stringify(
       value,
-      (_k, v) => {
+      (_k: string, v: unknown) => {
         if (typeof v === 'object' && v !== null) {
           if (seen.has(v)) return '[Circular]';
           seen.add(v);
@@ -473,13 +471,66 @@ function safeJsonStringify(value: unknown): string {
   }
 }
 
-function extractRequestId(req: any): string | undefined {
-  const headers = req?.headers ?? {};
+function getRequestMethod(
+  req: unknown,
+  httpAdapter: HttpAdapterHost['httpAdapter'],
+): string {
+  if (
+    isRecord(req) &&
+    typeof req.method === 'string' &&
+    req.method.trim().length > 0
+  ) {
+    return req.method;
+  }
+
+  if (typeof httpAdapter.getRequestMethod === 'function') {
+    const method: unknown = (
+      httpAdapter.getRequestMethod as (request: unknown) => unknown
+    ).call(httpAdapter, req);
+    if (typeof method === 'string' && method.trim().length > 0) {
+      return method;
+    }
+  }
+
+  return 'UNKNOWN';
+}
+
+function getRequestPath(
+  req: unknown,
+  httpAdapter: HttpAdapterHost['httpAdapter'],
+): string {
+  if (typeof httpAdapter.getRequestUrl === 'function') {
+    const path: unknown = (
+      httpAdapter.getRequestUrl as (request: unknown) => unknown
+    ).call(httpAdapter, req);
+    if (typeof path === 'string' && path.trim().length > 0) {
+      return path;
+    }
+  }
+
+  if (
+    isRecord(req) &&
+    typeof req.url === 'string' &&
+    req.url.trim().length > 0
+  ) {
+    return req.url;
+  }
+
+  return 'UNKNOWN';
+}
+
+function extractRequestId(req: unknown): string | undefined {
+  if (!isRecord(req)) {
+    return undefined;
+  }
+
+  const request = req as RequestWithMeta;
+  const headers = request.headers ?? {};
   const v =
-    headers['x-request-id'] ||
-    headers['x-correlation-id'] ||
-    headers['x-correlationid'] ||
-    req?.id;
+    headers['x-request-id'] ??
+    headers['x-correlation-id'] ??
+    headers['x-correlationid'] ??
+    request.id;
 
   return typeof v === 'string' && v.trim() ? v.trim() : undefined;
 }
