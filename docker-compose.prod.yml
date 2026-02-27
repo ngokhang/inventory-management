@@ -1,0 +1,4 @@
+# Production overrides: use pre-built image from GHCR instead of building
+services:
+  api:
+    image: ${API_IMAGE}
