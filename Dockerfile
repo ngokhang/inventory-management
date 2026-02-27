@@ -50,8 +50,9 @@ COPY package.json pnpm-lock.yaml* ./
 # Install dependencies (Prisma CLI is required for generate/migrate in this stage)
 RUN pnpm install --frozen-lockfile
 
-# Copy prisma schema and generate client
+# Copy prisma schema, config, and generate client
 COPY prisma ./prisma
+COPY prisma.config.ts prisma.config.cjs ./
 RUN pnpm exec prisma generate
 
 # Copy built application from builder
@@ -63,4 +64,4 @@ RUN chown -R node:node /app
 EXPOSE 8080
 
 # Run migrations, seed data, and start the app
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy --config ./prisma.config.cjs && node dist/prisma/seed.js && node dist/src/main.js"]
