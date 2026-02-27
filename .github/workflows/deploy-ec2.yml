@@ -97,6 +97,6 @@ jobs:
             printf 'API_IMAGE=%s\n' "$API_IMAGE" >> .env
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.yml -f pull
+            docker compose -f docker-compose.yml -f up -d
             docker image prune -f
