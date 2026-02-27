@@ -6,9 +6,16 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  test-and-deploy:
+  test-build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout source
@@ -33,19 +40,52 @@ jobs:
       - name: Test
         run: pnpm run test
 
-      - name: Deploy to EC2 via SSH
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Deploy to EC2 via SSH (Docker only)
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          API_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
+          envs: API_IMAGE
           script: |
             set -euo pipefail
-            APP_DIR="${{ secrets.EC2_APP_DIR }}"
 
+            APP_DIR="${{ secrets.EC2_APP_DIR }}"
             if [ -z "$APP_DIR" ]; then
               echo "EC2_APP_DIR is required"
+              exit 1
+            fi
+
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Docker chưa được cài trên EC2"
               exit 1
             fi
 
@@ -53,10 +93,10 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
-            cat > .env <<'EOT'
-            ${{ secrets.ENV_PROD }}
-            EOT
+            printf '%s\n' "${{ secrets.ENV_PROD }}" > .env
+            printf 'API_IMAGE=%s\n' "$API_IMAGE" >> .env
 
-            docker compose pull || true
-            docker compose up -d --build
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             docker image prune -f
