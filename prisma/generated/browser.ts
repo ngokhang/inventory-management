@@ -27,3 +27,13 @@ export type Account = Prisma.AccountModel
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model Menu
+ * 
+ */
+export type Menu = Prisma.MenuModel
+/**
+ * Model MenuItem
+ * 
+ */
+export type MenuItem = Prisma.MenuItemModel

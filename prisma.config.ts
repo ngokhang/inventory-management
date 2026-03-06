@@ -7,6 +7,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    seed: 'npx tsx prisma/seed.ts',
   },
   datasource: {
     // process.env allows prisma generate to run in CI without DATABASE_URL

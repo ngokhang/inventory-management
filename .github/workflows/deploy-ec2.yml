@@ -1,10 +1,10 @@
 name: CI/CD Deploy to EC2
 
-on:
+on: # trigger workflow khi có code push lên branch main
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # cho phép chạy thủ công workflow từ giao diện Github
 
 env:
   REGISTRY: ghcr.io
@@ -13,9 +13,9 @@ env:
 jobs:
   test-build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    permissions: # cho phép workflow truy cập vào repository và packages
+      contents: read # cho phép workflow đọc code và commit
+      packages: write # cho phép workflow viết vào packages
 
     steps:
       - name: Checkout source
@@ -98,5 +98,6 @@ jobs:
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-            docker image prune -f
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f --filter "until=168h"
+            docker builder prune -f --filter "until=168h"
