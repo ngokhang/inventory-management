@@ -92,3 +92,134 @@ model MenuItem {
   @@index([name])
   @@index([parentId])
 }
+
+model ProductCategory {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id                String  @id @default(uuid())
+  slug              String  @unique
+  name              String
+  description       String?
+  productCategoryId String?
+  isActive          Boolean @default(true)
+
+  productCategory ProductCategory?   @relation(fields: [productCategoryId], references: [id])
+  attributes      ProductAttribute[]
+  productVariants ProductVariant[]
+  productImages   ProductImage[]
+}
+
+// Các kiểu thuộc tính 
+model AttributeType {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attributeValues   AttributeValue[]
+  productAttributes ProductAttribute[]
+
+  @@index([name])
+  @@index([createdAt])
+}
+
+// Giá trị của các kiểu thuộc tính
+model AttributeValue {
+  id              String   @id @default(uuid())
+  value           String
+  attributeTypeId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  attributeType     AttributeType      @relation(fields: [attributeTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  variantAttributes VariantAttribute[]
+
+  @@index([value])
+  @@index([createdAt])
+}
+
+// Gán thuộc tính cho sản phẩm
+model ProductAttribute {
+  id              String @id @default(uuid())
+  productId       String
+  attributeTypeId String
+
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  attributeType AttributeType @relation(fields: [attributeTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([productId, attributeTypeId])
+  @@index([productId])
+}
+
+model ProductVariant {
+  id           String  @id @default(uuid())
+  slug         String  @unique
+  productId    String
+  sku          String  @unique
+  name         String
+  inputPrice   Decimal
+  sellingPrice Decimal
+  stock        Int     @default(0)
+  isActive     Boolean @default(true)
+
+  product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  attributes    VariantAttribute[]
+  productImages ProductImage[]
+
+  @@index([slug])
+  @@index([productId])
+  @@index([sku])
+}
+
+model VariantAttribute {
+  id               String @id @default(uuid())
+  variantId        String
+  attributeValueId String
+
+  productVariant ProductVariant? @relation(fields: [variantId], references: [id])
+  attributeValue AttributeValue  @relation(fields: [attributeValueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([variantId, attributeValueId])
+  @@index([variantId])
+  @@index([attributeValueId])
+}
+
+// Image gắn với SPU hoặc SKU
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  variantId String? // null = ảnh chung của SPU
+  url       String
+  altText   String?
+  isMain    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Images {
+  id            String @id @default(uuid())
+  referenceType String
+  referenceId   String
+  url           String
+
+  @@index([referenceType, referenceId])
+  @@index([url])
+  @@index([referenceType, referenceId, url])
+}

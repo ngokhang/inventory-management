@@ -17,8 +17,8 @@
 
 import * as runtime from "@prisma/client/runtime/index-browser"
 
-export type * from '../models.js'
-export type * from './prismaNamespace.js'
+export type * from '../models'
+export type * from './prismaNamespace'
 
 export const Decimal = runtime.Decimal
 
@@ -54,7 +54,16 @@ export const ModelName = {
   Account: 'Account',
   User: 'User',
   Menu: 'Menu',
-  MenuItem: 'MenuItem'
+  MenuItem: 'MenuItem',
+  ProductCategory: 'ProductCategory',
+  Product: 'Product',
+  AttributeType: 'AttributeType',
+  AttributeValue: 'AttributeValue',
+  ProductAttribute: 'ProductAttribute',
+  ProductVariant: 'ProductVariant',
+  VariantAttribute: 'VariantAttribute',
+  ProductImage: 'ProductImage',
+  Images: 'Images'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -129,6 +138,110 @@ export const MenuItemScalarFieldEnum = {
 } as const
 
 export type MenuItemScalarFieldEnum = (typeof MenuItemScalarFieldEnum)[keyof typeof MenuItemScalarFieldEnum]
+
+
+export const ProductCategoryScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductCategoryScalarFieldEnum = (typeof ProductCategoryScalarFieldEnum)[keyof typeof ProductCategoryScalarFieldEnum]
+
+
+export const ProductScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  description: 'description',
+  productCategoryId: 'productCategoryId',
+  isActive: 'isActive'
+} as const
+
+export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
+
+
+export const AttributeTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttributeTypeScalarFieldEnum = (typeof AttributeTypeScalarFieldEnum)[keyof typeof AttributeTypeScalarFieldEnum]
+
+
+export const AttributeValueScalarFieldEnum = {
+  id: 'id',
+  value: 'value',
+  attributeTypeId: 'attributeTypeId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttributeValueScalarFieldEnum = (typeof AttributeValueScalarFieldEnum)[keyof typeof AttributeValueScalarFieldEnum]
+
+
+export const ProductAttributeScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  attributeTypeId: 'attributeTypeId'
+} as const
+
+export type ProductAttributeScalarFieldEnum = (typeof ProductAttributeScalarFieldEnum)[keyof typeof ProductAttributeScalarFieldEnum]
+
+
+export const ProductVariantScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  productId: 'productId',
+  sku: 'sku',
+  name: 'name',
+  inputPrice: 'inputPrice',
+  sellingPrice: 'sellingPrice',
+  stock: 'stock',
+  isActive: 'isActive'
+} as const
+
+export type ProductVariantScalarFieldEnum = (typeof ProductVariantScalarFieldEnum)[keyof typeof ProductVariantScalarFieldEnum]
+
+
+export const VariantAttributeScalarFieldEnum = {
+  id: 'id',
+  variantId: 'variantId',
+  attributeValueId: 'attributeValueId'
+} as const
+
+export type VariantAttributeScalarFieldEnum = (typeof VariantAttributeScalarFieldEnum)[keyof typeof VariantAttributeScalarFieldEnum]
+
+
+export const ProductImageScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  variantId: 'variantId',
+  url: 'url',
+  altText: 'altText',
+  isMain: 'isMain',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductImageScalarFieldEnum = (typeof ProductImageScalarFieldEnum)[keyof typeof ProductImageScalarFieldEnum]
+
+
+export const ImagesScalarFieldEnum = {
+  id: 'id',
+  referenceType: 'referenceType',
+  referenceId: 'referenceId',
+  url: 'url'
+} as const
+
+export type ImagesScalarFieldEnum = (typeof ImagesScalarFieldEnum)[keyof typeof ImagesScalarFieldEnum]
 
 
 export const SortOrder = {
